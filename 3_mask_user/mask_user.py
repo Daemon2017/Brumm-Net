@@ -31,7 +31,7 @@ def find_surnames(file_name):
     cv2.imwrite('./highlighted/' + short_name + '_img.jpg', img)
 
 if not os.path.exists('highlighted'):
-	os.makedirs('highlighted')
+    os.makedirs('highlighted')
 
 if not os.path.exists('cropped'):
     os.makedirs('cropped')

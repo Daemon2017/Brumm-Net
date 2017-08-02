@@ -70,24 +70,24 @@ def build():
 
 
 def prepare():
-    files = os.listdir('./')
-
+    files = os.listdir('./raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
     x_train = np.ndarray((total, 3200, 3200, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
-        img = imread(os.path.join(x_file_name))
+        img = imread(os.path.join('./raws/' + x_file_name))
         x_train[i] = np.array([img])
         i += 1
     np.save('x_train.npy', x_train)
 
+    files = os.listdir('./masks/')
     y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
     total = len(y_files_names)
     y_train = np.ndarray((total, 3200, 3200, 3), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
-        img = imread(os.path.join(y_file_name))
+        img = imread(os.path.join('./masks/' + y_file_name))
         y_train[i] = np.array([img])
         i += 1
     np.save('y_train.npy', y_train)
@@ -128,6 +128,15 @@ def predict():
         '''
 
 
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+if not os.path.exists('raws'):
+    os.makedirs('raws')
+
+if not os.path.exists('masks'):
+    os.makedirs('masks')
+
 zero_choice = raw_input('Prepare training data? (y or n): ')
 if zero_choice == 'y':
     prepare()
@@ -139,7 +148,7 @@ elif frst_choice == 'train':
     model = build()
     train()
 
-#scnd_choice = raw_input('Prepare test data? (y or n): ')
+# scnd_choice = raw_input('Prepare test data? (y or n): ')
 
 thrd_choice = raw_input('Model is ready! Start prediction? (y or n): ')
 if thrd_choice == 'y':
