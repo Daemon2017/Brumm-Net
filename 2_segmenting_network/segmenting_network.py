@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from skimage.io import imread
+from skimage.io import imread, imsave
 
 from keras.models import load_model, Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
@@ -30,7 +30,7 @@ def dice_coef_loss(y_true, y_pred):
 
 
 def build():
-    inputs = Input(shape=(3200, 3200, 3))
+    inputs = Input(shape=(1008, 1008, 3))
 
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
@@ -61,7 +61,7 @@ def build():
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(up9)
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv9)
 
-    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
+    conv10 = Conv2D(3, (1, 1), activation='sigmoid')(conv9)
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
@@ -69,11 +69,12 @@ def build():
     return model
 
 
-def prepare():
+def prepare_train():
     files = os.listdir('./raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
-    x_train = np.ndarray((total, 3200, 3200, 3), dtype=np.uint8)
+
+    x_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./raws/' + x_file_name))
@@ -84,7 +85,8 @@ def prepare():
     files = os.listdir('./masks/')
     y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
     total = len(y_files_names)
-    y_train = np.ndarray((total, 3200, 3200, 3), dtype=np.uint8)
+
+    y_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
         img = imread(os.path.join('./masks/' + y_file_name))
@@ -96,10 +98,7 @@ def prepare():
 def train():
     x_train = np.load('x_train.npy')
     x_train = x_train.astype('float32')
-    mean = np.mean(x_train)
-    std = np.std(x_train)
-    x_train -= mean
-    x_train /= std
+    x_train /= 255
 
     y_train = np.load('y_train.npy')
     y_train = y_train.astype('float32')
@@ -107,25 +106,33 @@ def train():
 
     model.fit(x_train,
               y_train,
-              batch_size=1,
+              batch_size=4,
               epochs=25,
               callbacks=[tbCallBack])
     model.save('model.h5')
 
 
+def prepare_predict():
+    files = os.listdir('./predict_raws/')
+    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
+    total = len(x_files_names)
+
+    x_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
+    i = 0
+    for x_file_name in x_files_names:
+        img = imread(os.path.join('./predict_raws/' + x_file_name))
+        x_train[i] = np.array([img])
+        i += 1
+    np.save('x_predict.npy', x_train)
+
+
 def predict():
-    '''
-    x_test = np.loadtxt("Test_Input.cfg").reshape(14, 27, 18, 1)
-    predictions = model.predict_on_batch(x_test)
-    for prediction in predictions:
-        max = prediction[0]
-        pos = 0
-        for i in range(len(prediction)):
-            if prediction[i] > max:
-                max = prediction[i]
-                pos = i
-        print 'Max=%2f Pos=%3d' % (max, pos)
-        '''
+    x_predict = np.load('x_predict.npy')
+    x_predict = x_predict.astype('float32')
+    x_predict /= 255
+
+    predictions = model.predict_on_batch(x_predict)
+    np.save('predictions.npy', predictions)
 
 
 if not os.path.exists('logs'):
@@ -137,9 +144,15 @@ if not os.path.exists('raws'):
 if not os.path.exists('masks'):
     os.makedirs('masks')
 
+if not os.path.exists('predict_raws'):
+    os.makedirs('predict_raws')
+
+if not os.path.exists('predict_masks'):
+    os.makedirs('predict_masks')
+
 zero_choice = raw_input('Prepare training data? (y or n): ')
 if zero_choice == 'y':
-    prepare()
+    prepare_train()
 
 frst_choice = raw_input('Please, enter needed action (load or train): ')
 if frst_choice == 'load':
@@ -148,7 +161,9 @@ elif frst_choice == 'train':
     model = build()
     train()
 
-# scnd_choice = raw_input('Prepare test data? (y or n): ')
+scnd_choice = raw_input('Prepare test data? (y or n): ')
+if scnd_choice == 'y':
+    prepare_predict()
 
 thrd_choice = raw_input('Model is ready! Start prediction? (y or n): ')
 if thrd_choice == 'y':
