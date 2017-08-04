@@ -3,7 +3,7 @@ import os
 
 
 def prepare_mask(file_name):
-    print('Working with file' + str(file_name))
+    print('Preparing mask! Working with file' + str(file_name))
 
     img = cv2.imread('./raws/' + file_name)
 
@@ -17,6 +17,7 @@ def prepare_mask(file_name):
 
 
 def enlarge_mask(file_name):
+    print('Enlarging mask! Working with file' + str(file_name))
     im = cv2.imread('./masks/' + file_name)
     WHITE = [255, 255, 255]
     im = cv2.copyMakeBorder(im, 0, 1067, 0, 0, cv2.BORDER_CONSTANT, value=WHITE)
@@ -24,6 +25,7 @@ def enlarge_mask(file_name):
 
 
 def enlarge_raw(file_name):
+    print('Enlarging raw! Working with file' + str(file_name))
     im = cv2.imread('./raws/' + file_name)
     BLACK = [0, 0, 0]
     im = cv2.copyMakeBorder(im, 0, 1067, 0, 0, cv2.BORDER_CONSTANT, value=BLACK)
@@ -31,12 +33,14 @@ def enlarge_raw(file_name):
 
 
 def resize_mask(file_name):
+    print('Resizing mask! Working with file' + str(file_name))
     im = cv2.imread('./masks/' + file_name)
     im = cv2.resize(im, (1008, 1008))
     cv2.imwrite('./masks/' + file_name, im)
 
 
 def resize_raw(file_name):
+    print('Resizing raw! Working with file' + str(file_name))
     im = cv2.imread('./raws/' + file_name)
     im = cv2.resize(im, (1008, 1008))
     cv2.imwrite('./raws/' + file_name, im)

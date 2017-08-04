@@ -1,11 +1,12 @@
 import numpy as np
 import os
+import scipy.misc
 
-from skimage.io import imread, imsave
+from skimage.io import imread
 
-from keras.models import load_model, Model
+from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
-from keras.optimizers import Adam
+from keras.optimizers import Adadelta
 from keras.callbacks import TensorBoard
 from keras import backend as K
 
@@ -61,11 +62,15 @@ def build():
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(up9)
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv9)
 
-    conv10 = Conv2D(3, (1, 1), activation='sigmoid')(conv9)
+    conv10 = Conv2D(3, (1, 1), activation='relu')(conv9)
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    adadelta = Adadelta(lr=1,
+                        rho=0.95,
+                        epsilon=1e-08,
+                        decay=0.01)
+    model.compile(optimizer=adadelta, loss=dice_coef_loss, metrics=[dice_coef])
     return model
 
 
@@ -107,7 +112,9 @@ def train():
     model.fit(x_train,
               y_train,
               batch_size=4,
-              epochs=25,
+              epochs=10,
+              verbose=1,
+              validation_split=0.1,
               callbacks=[tbCallBack])
     model.save('model.h5')
 
@@ -135,6 +142,14 @@ def predict():
     np.save('predictions.npy', predictions)
 
 
+def draw_predict():
+    predictions = np.load('predictions.npy')
+    i = 0
+    for predict in predictions:
+        scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', predict)
+        i += 1
+
+
 if not os.path.exists('logs'):
     os.makedirs('logs')
 
@@ -156,7 +171,8 @@ if zero_choice == 'y':
 
 frst_choice = raw_input('Please, enter needed action (load or train): ')
 if frst_choice == 'load':
-    model = load_model('model.h5')
+    model = build()
+    model.load_weights('model.h5')
 elif frst_choice == 'train':
     model = build()
     train()
@@ -165,8 +181,12 @@ scnd_choice = raw_input('Prepare test data? (y or n): ')
 if scnd_choice == 'y':
     prepare_predict()
 
-thrd_choice = raw_input('Model is ready! Start prediction? (y or n): ')
+thrd_choice = raw_input('Start prediction? (y or n): ')
 if thrd_choice == 'y':
     predict()
-elif thrd_choice == 'n':
+
+frth_choice = raw_input('Save predictions to file? (y or n): ')
+if frth_choice == 'y':
+    draw_predict()
+elif frth_choice == 'n':
     exit()
