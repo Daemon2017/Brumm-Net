@@ -31,7 +31,8 @@ def dice_coef_loss(y_true, y_pred):
 
 
 def build():
-    inputs = Input(shape=(1008, 1008, 3))
+    print('Building model...')
+    inputs = Input(shape=(1200, 800, 3))
 
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
@@ -70,7 +71,8 @@ def build():
                         rho=0.95,
                         epsilon=1e-08,
                         decay=0.01)
-    model.compile(optimizer=adadelta, loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=adadelta, loss=dice_coef_loss, metrics=[dice_coef, 'acc'])
+    print('Model ready!')
     return model
 
 
@@ -79,7 +81,7 @@ def prepare_train():
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./raws/' + x_file_name))
@@ -91,7 +93,7 @@ def prepare_train():
     y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
     total = len(y_files_names)
 
-    y_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
+    y_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
         img = imread(os.path.join('./masks/' + y_file_name))
@@ -124,7 +126,7 @@ def prepare_predict():
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, 1008, 1008, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./predict_raws/' + x_file_name))
@@ -149,6 +151,7 @@ def draw_predict():
         scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', predict)
         i += 1
 
+build()
 
 if not os.path.exists('logs'):
     os.makedirs('logs')
