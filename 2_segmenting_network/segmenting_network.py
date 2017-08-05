@@ -32,7 +32,7 @@ def dice_coef_loss(y_true, y_pred):
 
 def build():
     print('Building model...')
-    inputs = Input(shape=(1200, 800, 3))
+    inputs = Input(shape=(800, 1200, 3))
 
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
@@ -81,7 +81,7 @@ def prepare_train():
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./raws/' + x_file_name))
@@ -93,7 +93,7 @@ def prepare_train():
     y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
     total = len(y_files_names)
 
-    y_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
+    y_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
         img = imread(os.path.join('./masks/' + y_file_name))
@@ -113,10 +113,10 @@ def train():
 
     model.fit(x_train,
               y_train,
-              batch_size=4,
-              epochs=10,
+              batch_size=8,
+              epochs=1,
               verbose=1,
-              validation_split=0.1,
+              validation_split=0.2,
               callbacks=[tbCallBack])
     model.save('model.h5')
 
@@ -126,7 +126,7 @@ def prepare_predict():
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, 1200, 800, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./predict_raws/' + x_file_name))
