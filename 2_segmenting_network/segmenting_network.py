@@ -7,7 +7,7 @@ from skimage.io import imread
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
 from keras.optimizers import Adadelta
-from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
 
 K.set_image_dim_ordering('tf')
@@ -17,6 +17,19 @@ tbCallBack = TensorBoard(log_dir='./logs',
                          write_graph=True,
                          write_grads=True,
                          write_images=True)
+
+
+class WeightsSaver(Callback):
+    def __init__(self, model, N):
+        self.model = model
+        self.N = N
+        self.batch = 0
+
+    def on_batch_end(self, batch, logs={}):
+        if self.batch % self.N == 0:
+            name = 'weights%08d.h5' % self.batch
+            self.model.save_weights(name)
+        self.batch += 1
 
 
 def dice_coef(y_true, y_pred):
@@ -77,6 +90,7 @@ def build():
 
 
 def prepare_train():
+    print('Preparing train...')
     files = os.listdir('./raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
@@ -100,6 +114,7 @@ def prepare_train():
         y_train[i] = np.array([img])
         i += 1
     np.save('y_train.npy', y_train)
+    print('Train prepared!')
 
 
 def train():
@@ -115,15 +130,16 @@ def train():
 
     model.fit(x_train,
               y_train,
-              batch_size=8,
-              epochs=10,
+              batch_size=10,
+              epochs=5,
               verbose=1,
               validation_split=0.2,
-              callbacks=[tbCallBack])
+              callbacks=[tbCallBack, WeightsSaver(model, 1)])
     model.save('model.h5')
 
 
 def prepare_predict():
+    print('Preparing predict...')
     files = os.listdir('./predict_raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
@@ -135,6 +151,7 @@ def prepare_predict():
         x_train[i] = np.array([img])
         i += 1
     np.save('x_predict.npy', x_train)
+    print('Predict prepared!')
 
 
 def predict():
@@ -153,7 +170,6 @@ def draw_predict():
         scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', predict)
         i += 1
 
-build()
 
 if not os.path.exists('logs'):
     os.makedirs('logs')
