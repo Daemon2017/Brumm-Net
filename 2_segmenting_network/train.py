@@ -18,6 +18,9 @@ tbCallBack = TensorBoard(log_dir='./logs',
                          write_grads=True,
                          write_images=True)
 
+img_width = 1200
+img_height = 800
+
 
 class WeightsSaver(Callback):
     def __init__(self, model, N):
@@ -45,7 +48,7 @@ def dice_coef_loss(y_true, y_pred):
 
 def build():
     print('Building model...')
-    inputs = Input(shape=(800, 1200, 3))
+    inputs = Input(shape=(img_height, img_width, 3))
 
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
@@ -90,12 +93,12 @@ def build():
 
 
 def prepare_train():
-    print('Preparing train...')
+    print('Preparing training set...')
     files = os.listdir('./raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./raws/' + x_file_name))
@@ -107,14 +110,14 @@ def prepare_train():
     y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
     total = len(y_files_names)
 
-    y_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
+    y_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
         img = imread(os.path.join('./masks/' + y_file_name))
         y_train[i] = np.array([img])
         i += 1
     np.save('y_train.npy', y_train)
-    print('Train prepared!')
+    print('Training set prepared!')
 
 
 def train():
@@ -126,7 +129,7 @@ def train():
     y_train = y_train.astype('float32')
     y_train /= 255.
 
-    model_checkpoint = ModelCheckpoint('weights_checkpoint.h5', monitor='val_loss', save_best_only=True)
+    ModelCheckpoint('weights_checkpoint.h5', monitor='val_loss', save_best_only=True)
 
     model.fit(x_train,
               y_train,
@@ -138,39 +141,6 @@ def train():
     model.save('model.h5')
 
 
-def prepare_predict():
-    print('Preparing predict...')
-    files = os.listdir('./predict_raws/')
-    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
-    total = len(x_files_names)
-
-    x_train = np.ndarray((total, 800, 1200, 3), dtype=np.uint8)
-    i = 0
-    for x_file_name in x_files_names:
-        img = imread(os.path.join('./predict_raws/' + x_file_name))
-        x_train[i] = np.array([img])
-        i += 1
-    np.save('x_predict.npy', x_train)
-    print('Predict prepared!')
-
-
-def predict():
-    x_predict = np.load('x_predict.npy')
-    x_predict = x_predict.astype('float32')
-    x_predict /= 255
-
-    predictions = model.predict_on_batch(x_predict)
-    np.save('predictions.npy', predictions)
-
-
-def draw_predict():
-    predictions = np.load('predictions.npy')
-    i = 0
-    for predict in predictions:
-        scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', predict)
-        i += 1
-
-
 if not os.path.exists('logs'):
     os.makedirs('logs')
 
@@ -180,34 +150,11 @@ if not os.path.exists('raws'):
 if not os.path.exists('masks'):
     os.makedirs('masks')
 
-if not os.path.exists('predict_raws'):
-    os.makedirs('predict_raws')
-
-if not os.path.exists('predict_masks'):
-    os.makedirs('predict_masks')
-
 zero_choice = raw_input('Prepare training data? (y or n): ')
 if zero_choice == 'y':
     prepare_train()
 
-frst_choice = raw_input('Please, enter needed action (load or train): ')
-if frst_choice == 'load':
-    model = build()
-    model.load_weights('model.h5')
-elif frst_choice == 'train':
+frst_choice = raw_input('Start training? (y or n): ')
+if frst_choice == 'y':
     model = build()
     train()
-
-scnd_choice = raw_input('Prepare test data? (y or n): ')
-if scnd_choice == 'y':
-    prepare_predict()
-
-thrd_choice = raw_input('Start prediction? (y or n): ')
-if thrd_choice == 'y':
-    predict()
-
-frth_choice = raw_input('Save predictions to file? (y or n): ')
-if frth_choice == 'y':
-    draw_predict()
-elif frth_choice == 'n':
-    exit()
