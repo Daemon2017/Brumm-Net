@@ -7,7 +7,7 @@ from skimage.io import imread
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
 from keras.optimizers import Adadelta
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras import backend as K
 
 K.set_image_dim_ordering('tf')
@@ -111,10 +111,12 @@ def train():
     y_train = y_train.astype('float32')
     y_train /= 255.
 
+    model_checkpoint = ModelCheckpoint('weights_checkpoint.h5', monitor='val_loss', save_best_only=True)
+
     model.fit(x_train,
               y_train,
               batch_size=8,
-              epochs=1,
+              epochs=10,
               verbose=1,
               validation_split=0.2,
               callbacks=[tbCallBack])
