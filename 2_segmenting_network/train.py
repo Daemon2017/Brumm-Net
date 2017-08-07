@@ -30,8 +30,7 @@ class WeightsSaver(Callback):
 
     def on_batch_end(self, batch, logs={}):
         if self.batch % self.N == 0:
-            name = 'weights%08d.h5' % self.batch
-            self.model.save_weights(name)
+            self.model.save_weights('weights_batch.h5')
         self.batch += 1
 
 
