@@ -6,7 +6,7 @@ from skimage.io import imread
 
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
-from keras.optimizers import Adadelta
+from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
 
@@ -21,10 +21,17 @@ tbCallBack = TensorBoard(log_dir='./logs',
 img_width = 1200
 img_height = 800
 
-size_of_batch = 10
 
-start = 0
-end = size_of_batch
+class WeightsSaver(Callback):
+    def __init__(self, model, N):
+        self.model = model
+        self.N = N
+        self.batch = 0
+
+    def on_batch_end(self, batch, logs={}):
+        if self.batch % self.N == 0:
+            self.model.save_weights('weights_batch.h5')
+        self.batch += 1
 
 
 def dice_coef(y_true, y_pred):
@@ -75,55 +82,57 @@ def build():
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
-    adadelta = Adadelta(lr=1,
-                        rho=0.95,
-                        epsilon=1e-08,
-                        decay=0.01)
-    model.compile(optimizer=adadelta, loss=dice_coef_loss, metrics=[dice_coef, 'acc'])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef, 'acc'])
     print('Model ready!')
     return model
 
 
-def generator():
-    global start, end, total
+def prepare_train():
+    print('Preparing training set...')
+    files = os.listdir('./raws/')
+    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
+    total = len(x_files_names)
 
-    x_files = os.listdir('./raws/')
-    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
-    x_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
+    x_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
+    i = 0
+    for x_file_name in x_files_names:
+        img = imread(os.path.join('./raws/' + x_file_name))
+        x_train[i] = np.array([img])
+        i += 1
+    np.save('x_train.npy', x_train)
 
-    y_files = os.listdir('./masks/')
-    y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
-    y_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
+    files = os.listdir('./masks/')
+    y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
+    total = len(y_files_names)
 
-    while True:
-        i = 0
-        for j in range(start, end):
-            x_img = imread(os.path.join('./raws/' + x_files_names[j]))
-            y_img = imread(os.path.join('./masks/' + y_files_names[j]))
-            x_train[i] = np.array([x_img])
-            y_train[i] = np.array([y_img])
-            i += 1
-
-        start += size_of_batch
-        end += size_of_batch
-        if end > total:
-            start = 0
-            end = size_of_batch
-
-        x_train = x_train.astype('float32')
-        y_train = y_train.astype('float32')
-        x_train /= 255
-        y_train /= 255
-
-        yield x_train, y_train
+    y_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
+    i = 0
+    for y_file_name in y_files_names:
+        img = imread(os.path.join('./masks/' + y_file_name))
+        y_train[i] = np.array([img])
+        i += 1
+    np.save('y_train.npy', y_train)
+    print('Training set prepared!')
 
 
 def train():
-    model.fit_generator(generator(),
-                        steps_per_epoch=total / size_of_batch,
-                        epochs=25,
-                        verbose=1,
-                        callbacks=[tbCallBack])
+    x_train = np.load('x_train.npy')
+    x_train = x_train.astype('float32')
+    x_train /= 255
+
+    y_train = np.load('y_train.npy')
+    y_train = y_train.astype('float32')
+    y_train /= 255.
+
+    ModelCheckpoint('weights_checkpoint.h5', monitor='val_loss', save_best_only=True)
+
+    model.fit(x_train,
+              y_train,
+              batch_size=10,
+              epochs=20,
+              verbose=1,
+              validation_split=0.2,
+              callbacks=[tbCallBack, WeightsSaver(model, 1)])
     model.save('model.h5')
 
 
@@ -136,19 +145,9 @@ if not os.path.exists('raws'):
 if not os.path.exists('masks'):
     os.makedirs('masks')
 
-x_files = os.listdir('./raws/')
-x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
-x_total = len(x_files_names)
-y_files = os.listdir('./masks/')
-y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
-y_total = len(y_files_names)
-
-total = 0
-if x_total != y_total:
-    exit()
-else:
-    total = x_total
-    print('Number of X and Y in train is the same. Work continues!')
+zero_choice = raw_input('Prepare training data? (y or n): ')
+if zero_choice == 'y':
+    prepare_train()
 
 frst_choice = raw_input('Start training? (y or n): ')
 if frst_choice == 'y':
