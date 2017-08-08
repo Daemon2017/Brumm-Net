@@ -5,7 +5,7 @@ import scipy.misc
 from skimage.io import imread
 
 from keras.models import Model
-from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization
+from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization, add, AveragePooling2D
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
@@ -14,6 +14,7 @@ K.set_image_dim_ordering('tf')
 
 img_width = 1216
 img_height = 800
+
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -33,25 +34,35 @@ def build():
     conv1 = Conv2D(32, (3, 3), activation='elu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='elu', padding='same')(conv1)
     drop1 = Dropout(0.05)(conv1)
-    pool1 = MaxPooling2D(pool_size=(2, 2))(drop1)
-    conv2 = Conv2D(64, (3, 3), activation='elu', padding='same')(pool1)
+    maxpool1 = MaxPooling2D(pool_size=(2, 2))(drop1)
+    avgpool1 = AveragePooling2D(pool_size=(2, 2))(drop1)
+    add1 = add([maxpool1, avgpool1], axis=3)
+    conv2 = Conv2D(64, (3, 3), activation='elu', padding='same')(add1)
     conv2 = Conv2D(64, (3, 3), activation='elu', padding='same')(conv2)
     drop2 = Dropout(0.05)(conv2)
-    pool2 = MaxPooling2D(pool_size=(2, 2))(drop2)
-    conv3 = Conv2D(128, (3, 3), activation='elu', padding='same')(pool2)
+    maxpool2 = MaxPooling2D(pool_size=(2, 2))(drop2)
+    avgpool2 = AveragePooling2D(pool_size=(2, 2))(drop2)
+    add2 = add([maxpool2, avgpool2], axis=3)
+    conv3 = Conv2D(128, (3, 3), activation='elu', padding='same')(add2)
     conv3 = Conv2D(128, (3, 3), activation='elu', padding='same')(conv3)
     drop3 = Dropout(0.05)(conv3)
-    pool3 = MaxPooling2D(pool_size=(2, 2))(drop3)
-    conv4 = Conv2D(256, (3, 3), activation='elu', padding='same')(pool3)
+    maxpool3 = MaxPooling2D(pool_size=(2, 2))(drop3)
+    avgpool3 = AveragePooling2D(pool_size=(2, 2))(drop3)
+    add3 = add([maxpool3, avgpool3], axis=3)
+    conv4 = Conv2D(256, (3, 3), activation='elu', padding='same')(add3)
     conv4 = Conv2D(256, (3, 3), activation='elu', padding='same')(conv4)
     drop4 = Dropout(0.05)(conv4)
-    pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
-    conv5 = Conv2D(512, (3, 3), activation='elu', padding='same')(pool4)
+    maxpool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
+    avgpool4 = AveragePooling2D(pool_size=(2, 2))(drop4)
+    add4 = add([maxpool4, avgpool4], axis=3)
+    conv5 = Conv2D(512, (3, 3), activation='elu', padding='same')(add4)
     conv5 = Conv2D(512, (3, 3), activation='elu', padding='same')(conv5)
     drop5 = Dropout(0.05)(conv5)
-    pool5 = MaxPooling2D(pool_size=(2, 2))(drop5)
+    maxpool5 = MaxPooling2D(pool_size=(2, 2))(drop5)
+    avgpool5 = AveragePooling2D(pool_size=(2, 2))(drop5)
+    add5 = add([maxpool5, avgpool5], axis=3)
 
-    conv6 = Conv2D(1024, (3, 3), activation='elu', padding='same')(pool5)
+    conv6 = Conv2D(1024, (3, 3), activation='elu', padding='same')(add5)
     conv6 = Conv2D(1024, (3, 3), activation='elu', padding='same')(conv6)
     drop6 = Dropout(0.05)(conv6)
 
@@ -80,7 +91,7 @@ def build():
 
     model = Model(inputs=[inputs], outputs=[conv12])
 
-    model.compile(optimizer=Adam(lr=0.0001), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=0.0001, decay=0.0), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
     return model
 
