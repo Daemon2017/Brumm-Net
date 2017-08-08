@@ -69,24 +69,20 @@ def build():
     return model
 
 
-def prepare_predict():
+def predict():
     print('Preparing prediction set...')
     files = os.listdir('./predict_raws/')
     x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
     total = len(x_files_names)
 
-    x_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
+    x_predict = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
         img = imread(os.path.join('./predict_raws/' + x_file_name))
-        x_train[i] = np.array([img])
+        x_predict[i] = np.array([img])
         i += 1
-    np.save('x_predict.npy', x_train)
     print('Prediction set prepared!')
 
-
-def predict():
-    x_predict = np.load('x_predict.npy')
     x_predict = x_predict.astype('float32')
     x_mean = np.mean(x_predict)
     x_std = np.std(x_predict)
@@ -97,7 +93,8 @@ def predict():
     i = 0
     for prediction in predictions:
         prediction = (prediction[:, :, 0] * 255.).astype(np.uint8)
-        scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', prediction)
+        short_name = os.path.splitext(x_files_names[i])[0]
+        scipy.misc.imsave('./predict_masks/' + str(short_name) + '_mask.jpg', prediction)
         i += 1
 
 
@@ -109,10 +106,6 @@ if not os.path.exists('predict_masks'):
 
 model = build()
 model.load_weights('weights_batch.h5')
-
-scnd_choice = raw_input('Prepare predict data? (y or n): ')
-if scnd_choice == 'y':
-    prepare_predict()
 
 thrd_choice = raw_input('Start prediction? (y or n): ')
 if thrd_choice == 'y':
