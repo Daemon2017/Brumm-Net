@@ -2,11 +2,11 @@ import numpy as np
 import os
 import scipy.misc
 
+from PIL import Image
 from skimage.io import imread
-
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose
-from keras.optimizers import Adadelta
+from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
 
@@ -60,15 +60,11 @@ def build():
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(up9)
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv9)
 
-    conv10 = Conv2D(3, (1, 1), activation='relu')(conv9)
+    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
-    adadelta = Adadelta(lr=1,
-                        rho=0.95,
-                        epsilon=1e-08,
-                        decay=0.01)
-    model.compile(optimizer=adadelta, loss=dice_coef_loss, metrics=[dice_coef, 'acc'])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
     return model
 
@@ -101,8 +97,10 @@ def predict():
 def draw_predict():
     predictions = np.load('predictions.npy')
     i = 0
-    for predict in predictions:
-        scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', predict)
+    for prediction in predictions:
+        prediction *= 255
+        prediction = prediction.reshape(800, 1200)
+        scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', prediction)
         i += 1
 
 
