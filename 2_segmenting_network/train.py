@@ -78,38 +78,38 @@ def build():
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(up9)
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv9)
 
-    conv10 = Conv2D(3, (1, 1), activation='relu')(conv9)
+    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef, 'acc'])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
     return model
 
 
 def prepare_train():
     print('Preparing training set...')
-    files = os.listdir('./raws/')
-    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), files)
-    total = len(x_files_names)
+    x_files = os.listdir('./raws/')
+    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
+    x_total = len(x_files_names)
 
-    x_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
+    x_train = np.ndarray((x_total, img_height, img_width, 3), dtype=np.uint8)
     i = 0
     for x_file_name in x_files_names:
-        img = imread(os.path.join('./raws/' + x_file_name))
-        x_train[i] = np.array([img])
+        x_img = imread(os.path.join('./raws/' + x_file_name))
+        x_train[i] = np.array([x_img])
         i += 1
     np.save('x_train.npy', x_train)
 
-    files = os.listdir('./masks/')
-    y_files_names = filter(lambda x: x.endswith('_mask.jpg'), files)
-    total = len(y_files_names)
+    y_files = os.listdir('./masks/')
+    y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
+    y_total = len(y_files_names)
 
-    y_train = np.ndarray((total, img_height, img_width, 3), dtype=np.uint8)
+    y_train = np.ndarray((y_total, img_height, img_width, 1), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
-        img = imread(os.path.join('./masks/' + y_file_name))
-        y_train[i] = np.array([img])
+        y_img=scipy.ndimage.imread(os.path.join('./masks/' + y_file_name), mode='L')
+        y_train[i] = np.array([y_img]).reshape(800, 1200, 1)
         i += 1
     np.save('y_train.npy', y_train)
     print('Training set prepared!')
@@ -122,17 +122,20 @@ def train():
 
     y_train = np.load('y_train.npy')
     y_train = y_train.astype('float32')
-    y_train /= 255.
+    y_train /= 255
 
-    ModelCheckpoint('weights_checkpoint.h5', monitor='val_loss', save_best_only=True)
+    model_checkpoint = ModelCheckpoint('weights_checkpoint.h5',
+                                       monitor='val_loss',
+                                       save_best_only=True)
 
     model.fit(x_train,
               y_train,
               batch_size=10,
               epochs=20,
               verbose=1,
+              shuffle=True,
               validation_split=0.2,
-              callbacks=[tbCallBack, WeightsSaver(model, 1)])
+              callbacks=[tbCallBack, model_checkpoint, WeightsSaver(model, 1)])
     model.save('model.h5')
 
 
