@@ -108,7 +108,7 @@ def prepare_train():
     y_train = np.ndarray((y_total, img_height, img_width, 1), dtype=np.uint8)
     i = 0
     for y_file_name in y_files_names:
-        y_img=scipy.ndimage.imread(os.path.join('./masks/' + y_file_name), mode='L')
+        y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_file_name), mode='L')
         y_train[i] = np.array([y_img]).reshape(800, 1200, 1)
         i += 1
     np.save('y_train.npy', y_train)
@@ -118,11 +118,14 @@ def prepare_train():
 def train():
     x_train = np.load('x_train.npy')
     x_train = x_train.astype('float32')
-    x_train /= 255
+    x_mean = np.mean(x_train)
+    x_std = np.std(x_train)
+    x_train -= x_mean
+    x_train /= x_std
 
     y_train = np.load('y_train.npy')
     y_train = y_train.astype('float32')
-    y_train /= 255
+    y_train /= 255.
 
     model_checkpoint = ModelCheckpoint('weights_checkpoint.h5',
                                        monitor='val_loss',

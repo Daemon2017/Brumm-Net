@@ -88,18 +88,15 @@ def prepare_predict():
 def predict():
     x_predict = np.load('x_predict.npy')
     x_predict = x_predict.astype('float32')
-    x_predict /= 255
+    x_mean = np.mean(x_predict)
+    x_std = np.std(x_predict)
+    x_predict -= x_mean
+    x_predict /= x_std
 
     predictions = model.predict_on_batch(x_predict)
-    np.save('predictions.npy', predictions)
-
-
-def draw_predict():
-    predictions = np.load('predictions.npy')
     i = 0
     for prediction in predictions:
-        prediction *= 255
-        prediction = prediction.reshape(800, 1200)
+        prediction = (prediction[:, :, 0] * 255.).astype(np.uint8)
         scipy.misc.imsave('./predict_masks/' + str(i) + '.jpg', prediction)
         i += 1
 
@@ -120,9 +117,3 @@ if scnd_choice == 'y':
 thrd_choice = raw_input('Start prediction? (y or n): ')
 if thrd_choice == 'y':
     predict()
-
-frth_choice = raw_input('Save prediction to file? (y or n): ')
-if frth_choice == 'y':
-    draw_predict()
-elif frth_choice == 'n':
-    exit()
