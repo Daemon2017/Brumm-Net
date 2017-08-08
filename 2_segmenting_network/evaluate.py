@@ -121,7 +121,7 @@ def predict():
     for prediction in predictions:
         prediction = (prediction[:, :, 0] * 255.).astype(np.uint8)
         short_name = os.path.splitext(x_files_names[i])[0]
-        scipy.misc.imsave('./predict_masks/' + str(short_name) + '_mask.png', prediction)
+        scipy.misc.imsave('./predict_masks/' + str(short_name) + '_mask.jpg', prediction)
         i += 1
 
 
