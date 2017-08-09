@@ -152,7 +152,10 @@ def train():
 
     y_train = np.load('y_train.npy')
     y_train = y_train.astype('float32')
-    y_train /= 255.
+    y_mean = np.mean(y_train)
+    y_std = np.std(y_train)
+    y_train -= y_mean
+    y_train /= y_std
 
     model_checkpoint = ModelCheckpoint('weights_checkpoint.h5',
                                        monitor='val_loss',
