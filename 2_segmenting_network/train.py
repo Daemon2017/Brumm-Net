@@ -129,15 +129,14 @@ def batch_generator():
         x_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
         y_train = np.ndarray((size_of_batch, img_height, img_width, 1), dtype=np.uint8)
 
-        i = 0
-
+        sample = 0
         for j in range(start, end):
-            print('Preparing file ' + str(i))
+            print('Preparing file ' + str(sample))
             x_img = imread(os.path.join('./raws/' + x_files_names[j]))
             y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_files_names[j]), mode='L')
-            x_train[i] = np.array([x_img])
-            y_train[i] = np.array([y_img]).reshape(800, 1216, 1)
-            i += 1
+            x_train[sample] = np.array([x_img])
+            y_train[sample] = np.array([y_img]).reshape(800, 1216, 1)
+            sample += 1
 
         x_train = x_train.astype('float32')
         y_train = y_train.astype('float32')
@@ -150,6 +149,7 @@ def batch_generator():
         x_train /= x_std
         y_train /= y_std
 
+        print('Start is ' + str(start) + ' End is ' + str(end))
         start += size_of_batch
         end += size_of_batch
         if end >= total:
@@ -158,6 +158,9 @@ def batch_generator():
 
         print('Batch ' + str(batch) + ' generated!')
         batch += 1
+        if batch == size_of_batch:
+            batch = 0
+
         yield x_train, y_train
 
 
