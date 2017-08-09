@@ -123,15 +123,17 @@ def build():
 def batch_generator():
     global start, end, total, x_files_names, y_files_names
 
-    batch = 0
+    batch_num = 0
     while True:
-        print('Generating batch ' + str(batch))
+        print('------------------------------')
+        print('Generating batch ' + str(batch_num))
         x_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
         y_train = np.ndarray((size_of_batch, img_height, img_width, 1), dtype=np.uint8)
 
         sample = 0
         for j in range(start, end):
-            print('Preparing file: #' + str(sample) + ' name: ' + str(x_files_names[j]))
+            print('Preparing file: #' + str(sample) + ', raw name: ' + str(x_files_names[j]) + ', mask name: ' + str(
+                y_files_names[j]))
             x_img = imread(os.path.join('./raws/' + x_files_names[j]))
             y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_files_names[j]), mode='L')
             x_train[sample] = np.array([x_img])
@@ -149,22 +151,24 @@ def batch_generator():
         x_train /= x_std
         y_train /= y_std
 
-        print('Start is ' + str(start) + ' End is ' + str(end))
+        print('Start is ' + str(start) + ', end is ' + str(end))
         start += size_of_batch
         end += size_of_batch
-        if end >= total:
+        if end > total:
             start = 0
             end = size_of_batch
 
-        print('Batch ' + str(batch) + ' generated!')
-        batch += 1
-        if batch == size_of_batch:
-            batch = 0
+        print('Batch ' + str(batch_num) + ' generated!')
+        batch_num += 1
+        if batch_num == size_of_batch:
+            batch_num = 0
+        print('------------------------------')
 
         yield x_train, y_train
 
 
 def train():
+    print('Training...')
     model_checkpoint = ModelCheckpoint('weights_checkpoint.h5',
                                        monitor='val_loss',
                                        save_best_only=True)
@@ -172,8 +176,10 @@ def train():
                         epochs=20,
                         steps_per_epoch=total / size_of_batch,
                         verbose=1,
+                        initial_epoch=0,
                         callbacks=[tbCallBack, model_checkpoint, WeightsSaver(model, 1)])
     model.save('model.h5')
+    print('Training ended!')
 
 
 if not os.path.exists('logs'):
@@ -189,8 +195,21 @@ x_files = os.listdir('./raws/')
 y_files = os.listdir('./masks/')
 x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
 y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
+x_files_names.sort()
+y_files_names.sort()
 x_total = len(x_files_names)
 y_total = len(y_files_names)
+
+print('------------------------------')
+print('Raw files:')
+for file in x_files_names:
+    print(str(file))
+print('------------------------------')
+print('------------------------------')
+print('Mask files:')
+for file in y_files_names:
+    print(str(file))
+print('------------------------------')
 
 total = 0
 if x_total != y_total:
