@@ -173,7 +173,7 @@ def train():
                                        monitor='val_loss',
                                        save_best_only=True)
     model.fit_generator(generator=batch_generator(),
-                        epochs=20,
+                        epochs=50,
                         steps_per_epoch=total / size_of_batch,
                         verbose=1,
                         initial_epoch=0,
