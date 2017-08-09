@@ -131,7 +131,7 @@ def batch_generator():
 
         sample = 0
         for j in range(start, end):
-            print('Preparing file: #' + str(sample) + ' name: ' + str(x_files_names[j]))
+            print('Preparing file ' + str(sample))
             x_img = imread(os.path.join('./raws/' + x_files_names[j]))
             y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_files_names[j]), mode='L')
             x_train[sample] = np.array([x_img])
