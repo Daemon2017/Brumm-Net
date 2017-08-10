@@ -22,7 +22,7 @@ tbCallBack = TensorBoard(log_dir='./logs',
 img_width = 1216
 img_height = 800
 
-size_of_batch = 10
+size_of_batch = 5
 
 start = 0
 end = size_of_batch
