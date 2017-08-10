@@ -5,7 +5,8 @@ import scipy.misc
 from skimage.io import imread
 
 from keras.models import Model
-from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization, add, AveragePooling2D
+from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization, add, \
+    AveragePooling2D
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
@@ -20,6 +21,11 @@ tbCallBack = TensorBoard(log_dir='./logs',
 
 img_width = 1216
 img_height = 800
+
+size_of_batch = 10
+
+start = 0
+end = size_of_batch
 
 
 class WeightsSaver(Callback):
@@ -114,59 +120,63 @@ def build():
     return model
 
 
-def prepare_train():
-    print('Preparing training set...')
-    x_files = os.listdir('./raws/')
-    x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
-    x_total = len(x_files_names)
+def batch_generator():
+    global start, end, total, x_files_names, y_files_names
 
-    x_train = np.ndarray((x_total, img_height, img_width, 3), dtype=np.uint8)
-    i = 0
-    for x_file_name in x_files_names:
-        x_img = imread(os.path.join('./raws/' + x_file_name))
-        x_train[i] = np.array([x_img])
-        i += 1
-    np.save('x_train.npy', x_train)
+    batch_num = 0
+    while True:
+        print('------------------------------')
+        print('Generating batch ' + str(batch_num))
+        x_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
+        y_train = np.ndarray((size_of_batch, img_height, img_width, 1), dtype=np.uint8)
 
-    y_files = os.listdir('./masks/')
-    y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
-    y_total = len(y_files_names)
+        sample = 0
+        for j in range(start, end):
+            print('Preparing file: #' + str(sample) + ', raw name: ' + str(x_files_names[j]) + ', mask name: ' + str(
+                y_files_names[j]))
+            x_img = imread(os.path.join('./raws/' + x_files_names[j]))
+            y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_files_names[j]), mode='L')
+            x_train[sample] = np.array([x_img])
+            y_train[sample] = np.array([y_img]).reshape(800, 1216, 1)
+            sample += 1
 
-    y_train = np.ndarray((y_total, img_height, img_width, 1), dtype=np.uint8)
-    i = 0
-    for y_file_name in y_files_names:
-        y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_file_name), mode='L')
-        y_train[i] = np.array([y_img]).reshape(800, 1216, 1)
-        i += 1
-    np.save('y_train.npy', y_train)
-    print('Training set prepared!')
+        x_train = x_train.astype('float32')
+        y_train = y_train.astype('float32')
+        x_mean = np.mean(x_train)
+        x_std = np.std(x_train)
+        x_train -= x_mean
+        x_train /= x_std
+        y_train /= 255.0
+
+        print('Start is ' + str(start) + ', end is ' + str(end))
+        start += size_of_batch
+        end += size_of_batch
+        if end > total:
+            start = 0
+            end = size_of_batch
+
+        print('Batch ' + str(batch_num) + ' generated!')
+        batch_num += 1
+        if batch_num == size_of_batch:
+            batch_num = 0
+        print('------------------------------')
+
+        yield x_train, y_train
 
 
 def train():
-    x_train = np.load('x_train.npy')
-    x_train = x_train.astype('float32')
-    x_mean = np.mean(x_train)
-    x_std = np.std(x_train)
-    x_train -= x_mean
-    x_train /= x_std
-
-    y_train = np.load('y_train.npy')
-    y_train = y_train.astype('float32')
-    y_train /= 255.
-
+    print('Training...')
     model_checkpoint = ModelCheckpoint('weights_checkpoint.h5',
                                        monitor='val_loss',
                                        save_best_only=True)
-
-    model.fit(x_train,
-              y_train,
-              batch_size=10,
-              epochs=20,
-              verbose=1,
-              shuffle=True,
-              validation_split=0.2,
-              callbacks=[tbCallBack, model_checkpoint, WeightsSaver(model, 1)])
+    model.fit_generator(generator=batch_generator(),
+                        epochs=25,
+                        steps_per_epoch=total / size_of_batch,
+                        verbose=1,
+                        initial_epoch=0,
+                        callbacks=[tbCallBack, model_checkpoint, WeightsSaver(model, 1)])
     model.save('model.h5')
+    print('Training ended!')
 
 
 if not os.path.exists('logs'):
@@ -178,9 +188,32 @@ if not os.path.exists('raws'):
 if not os.path.exists('masks'):
     os.makedirs('masks')
 
-zero_choice = raw_input('Prepare training data? (y or n): ')
-if zero_choice == 'y':
-    prepare_train()
+x_files = os.listdir('./raws/')
+y_files = os.listdir('./masks/')
+x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
+y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
+x_files_names.sort()
+y_files_names.sort()
+x_total = len(x_files_names)
+y_total = len(y_files_names)
+
+print('------------------------------')
+print('Raw files:')
+for file in x_files_names:
+    print(str(file))
+print('------------------------------')
+print('------------------------------')
+print('Mask files:')
+for file in y_files_names:
+    print(str(file))
+print('------------------------------')
+
+total = 0
+if x_total != y_total:
+    exit()
+else:
+    total = x_total
+    print('Number of X and Y in train is the same. Work continues!')
 
 frst_choice = raw_input('Start training? (y or n): ')
 if frst_choice == 'y':
