@@ -6,7 +6,7 @@ from skimage.io import imread
 
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization, add, \
-    AveragePooling2D
+    AveragePooling2D, UpSampling2D
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
 from keras import backend as K
@@ -67,23 +67,23 @@ def build():
     conv6 = Conv2D(1024, (3, 3), activation='elu', padding='same')(conv6)
     drop6 = Dropout(0.5)(conv6)
 
-    up7 = concatenate([Conv2DTranspose(512, (2, 2), strides=(2, 2), padding='same')(drop6), conv5], axis=3)
+    up7 = concatenate([UpSampling2D(size=(2, 2))(drop6), conv5], axis=3)
     conv7 = Conv2D(512, (3, 3), activation='elu', padding='same')(up7)
     conv7 = Conv2D(512, (3, 3), activation='elu', padding='same')(conv7)
     drop7 = Dropout(0.5)(conv7)
-    up8 = concatenate([Conv2DTranspose(256, (2, 2), strides=(2, 2), padding='same')(drop7), conv4], axis=3)
+    up8 = concatenate([UpSampling2D(size=(2, 2))(drop7), conv4], axis=3)
     conv8 = Conv2D(256, (3, 3), activation='elu', padding='same')(up8)
     conv8 = Conv2D(256, (3, 3), activation='elu', padding='same')(conv8)
     drop8 = Dropout(0.5)(conv8)
-    up9 = concatenate([Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(drop8), conv3], axis=3)
+    up9 = concatenate([UpSampling2D(size=(2, 2))(drop8), conv3], axis=3)
     conv9 = Conv2D(128, (3, 3), activation='elu', padding='same')(up9)
     conv9 = Conv2D(128, (3, 3), activation='elu', padding='same')(conv9)
     drop9 = Dropout(0.5)(conv9)
-    up10 = concatenate([Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(drop9), conv2], axis=3)
+    up10 = concatenate([UpSampling2D(size=(2, 2))(drop9), conv2], axis=3)
     conv10 = Conv2D(64, (3, 3), activation='elu', padding='same')(up10)
     conv10 = Conv2D(64, (3, 3), activation='elu', padding='same')(conv10)
     drop10 = Dropout(0.5)(conv10)
-    up11 = concatenate([Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(drop10), conv1], axis=3)
+    up11 = concatenate([UpSampling2D(size=(2, 2))(drop10), conv1], axis=3)
     conv11 = Conv2D(32, (3, 3), activation='elu', padding='same')(up11)
     conv11 = Conv2D(32, (3, 3), activation='elu', padding='same')(conv11)
     drop11 = Dropout(0)(conv11)
