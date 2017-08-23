@@ -14,7 +14,7 @@ from keras import backend as K
 from mymodel import dice_coef, dice_coef_loss, build, img_width, img_height, L_0
 
 size_of_batch = 5
-epochs_num = 3
+epochs_num = 10
 
 start = 0
 end = size_of_batch

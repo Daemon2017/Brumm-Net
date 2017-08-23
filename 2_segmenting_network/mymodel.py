@@ -15,8 +15,8 @@ K.set_image_dim_ordering('tf')
 
 L_0 = 0.0001
 
-img_width = 1216
-img_height = 800
+img_width = 640
+img_height = 480
 
 
 def dice_coef(y_true, y_pred):
@@ -94,6 +94,6 @@ def build():
 
     model = Model(inputs=[inputs], outputs=[conv12])
 
-    model.compile(optimizer=Adam(lr=L_0, decay=0.0000333), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=L_0, decay=0.00001), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
     return model
