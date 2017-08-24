@@ -15,9 +15,9 @@ K.set_image_dim_ordering('tf')
 
 L_0 = 0.0001
 
-img_width = 640
-img_height = 480
-
+img_width = 480
+img_height = 360
+classes = 12
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -30,8 +30,8 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def block(inp, size, drop):
-    conv = Conv2D(size, (3, 3), activation='elu', padding='same')(inp)
+def block(input, size, drop):
+    conv = Conv2D(size, (3, 3), activation='elu', padding='same')(input)
     conv = Conv2D(size, (3, 3), activation='elu', padding='same')(conv)
     conv = Dropout(drop)(conv)
     return conv
@@ -75,7 +75,7 @@ def build():
     up11 = concatenate([UpSampling2D(size=(2, 2))(drop10), drop1], axis=3)
     drop11 = block(up11, 32, 0)
 
-    conv12 = Conv2D(1, (1, 1), activation='sigmoid')(drop11)
+    conv12 = Conv2D(classes, (1, 1), activation='softmax')(drop11)
 
     model = Model(inputs=[inputs], outputs=[conv12])
 
