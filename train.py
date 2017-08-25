@@ -11,10 +11,9 @@ from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback, LearningRateScheduler
 from keras import backend as K
 
-from mymodel import dice_coef, dice_coef_loss, build, img_width, img_height, classes, L_0
+from mymodel import dice_coef, dice_coef_loss, build, img_width, img_height, classes, L_0, epochs_num
 
 size_of_batch = 5
-epochs_num = 10
 
 start = 0
 end = size_of_batch
