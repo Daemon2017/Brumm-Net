@@ -33,51 +33,21 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def block_a(input, size):
+def block(input, size, drop):
     conv1 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
 
-    conv2 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-    conv2 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv2)
+    conv2_1 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
+    conv2_2 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv1)
 
-    conv3 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-    conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
-    conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
-
-    conv = concatenate([conv1, conv2, conv3], axis=3)
-    return conv
-
-
-def block_b(input, size):
-    conv1 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-
-    conv2 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-    conv2 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv2)
-    conv2 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv2)
-
-    conv3 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-    conv3 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv3)
-    conv3 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv3)
-    conv3 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv3)
-    conv3 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv3)
-
-    conv = concatenate([conv1, conv2, conv3], axis=3)
-    return conv
-
-
-def block_c(input, size):
-    conv1 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-
-    conv2 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-    conv2_1 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv2)
-    conv2_2 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv2)
-
-    conv3 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
+    conv3 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
     conv3 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv3)
-    conv3 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv3)
-    conv3_1 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv3)
-    conv3_2 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv3)
+    conv3_1 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv3)
+    conv3_2 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv3)
 
     conv = concatenate([conv1, conv2_1, conv2_2, conv3_1, conv3_2], axis=3)
+    conv = Conv2D(size, (1, 1), activation='elu', padding='same')(conv)
+
+    # conv = Dropout(drop)(conv)
     return conv
 
 
@@ -85,25 +55,33 @@ def build():
     print('Building model...')
     inputs = Input(shape=(img_height, img_width, 3))
 
-    conv1 = block_a(inputs, 128)
-    pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-    conv2 = block_b(pool1, 256)
-    pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-    conv3 = block_c(pool2, 512)
-    pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+    drop1 = block(inputs, 32, 0.125)
+    add1 = MaxPooling2D(pool_size=(2, 2))(drop1)
+    drop2 = block(add1, 64, 0.125)
+    add2 = MaxPooling2D(pool_size=(2, 2))(drop2)
+    drop3 = block(add2, 128, 0.125)
+    add3 = MaxPooling2D(pool_size=(2, 2))(drop3)
+    drop4 = block(add3, 256, 0.125)
+    add4 = MaxPooling2D(pool_size=(2, 2))(drop4)
+    drop5 = block(add4, 512, 0.125)
+    add5 = MaxPooling2D(pool_size=(2, 2))(drop5)
 
-    conv4 = Conv2D(1024, (1, 1), activation='elu', padding='same')(pool3)
+    drop6 = block(add5, 1024, 0.125)
 
-    up5 = concatenate([UpSampling2D(size=(2, 2))(conv4), conv3], axis=3)
-    conv5 = block_c(up5, 512)
-    up6 = concatenate([UpSampling2D(size=(2, 2))(conv5), conv2], axis=3)
-    conv6 = block_b(up6, 256)
-    up7 = concatenate([UpSampling2D(size=(2, 2))(conv6), conv1], axis=3)
-    conv7 = block_a(up7, 128)
+    up7 = concatenate([UpSampling2D(size=(2, 2))(drop6), drop5], axis=3)
+    drop7 = block(up7, 512, 0.125)
+    up8 = concatenate([UpSampling2D(size=(2, 2))(drop7), drop4], axis=3)
+    drop8 = block(up8, 256, 0.125)
+    up9 = concatenate([UpSampling2D(size=(2, 2))(drop8), drop3], axis=3)
+    drop9 = block(up9, 128, 0.125)
+    up10 = concatenate([UpSampling2D(size=(2, 2))(drop9), drop2], axis=3)
+    drop10 = block(up10, 64, 0.125)
+    up11 = concatenate([UpSampling2D(size=(2, 2))(drop10), drop1], axis=3)
+    drop11 = block(up11, 32, 0)
 
-    conv8 = Conv2D(classes, (1, 1), activation='sigmoid')(conv7)
+    conv12 = Conv2D(classes, (1, 1), activation='sigmoid')(drop11)
 
-    model = Model(inputs=[inputs], outputs=[conv8])
+    model = Model(inputs=[inputs], outputs=[conv12])
 
     model.compile(optimizer=Adam(lr=L_0, decay=0.0001 / epochs_num), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
