@@ -36,12 +36,15 @@ def dice_coef_loss(y_true, y_pred):
 def block(input, size, drop):
     conv1 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
 
-    conv2 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv1)
+    conv2_1 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
+    conv2_2 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv1)
 
-    conv3 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv1)
-    conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
+    conv3 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
+    conv3 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv3)
+    conv3_1 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
+    conv3_2 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv3)
 
-    conv = concatenate([conv1, conv2, conv3], axis=3)
+    conv = concatenate([conv1, conv2_1, conv2_2, conv3_1, conv3_2], axis=3)
     conv = Conv2D(size, (1, 1), activation='elu', padding='same')(conv)
 
     # conv = Dropout(drop)(conv)
