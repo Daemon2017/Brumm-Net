@@ -33,18 +33,9 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def block(input, size, drop):
-    conv1 = Conv2D(size, (1, 1), activation='elu', padding='same')(input)
-
-    conv2 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv1)
-
-    conv3 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv1)
-    conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
-
-    conv = concatenate([conv1, conv2, conv3], axis=3)
-    conv = Conv2D(size, (1, 1), activation='elu', padding='same')(conv)
-
-    # conv = Dropout(drop)(conv)
+def block(input, size):
+    conv = Conv2D(size, (3, 3), activation='elu', padding='same')(input)
+    conv = Conv2D(size, (3, 3), activation='elu', padding='same')(conv)
     return conv
 
 
@@ -52,29 +43,29 @@ def build():
     print('Building model...')
     inputs = Input(shape=(img_height, img_width, 3))
 
-    drop1 = block(inputs, 32, 0.125)
+    drop1 = block(inputs, 32)
     add1 = MaxPooling2D(pool_size=(2, 2))(drop1)
-    drop2 = block(add1, 64, 0.125)
+    drop2 = block(add1, 64)
     add2 = MaxPooling2D(pool_size=(2, 2))(drop2)
-    drop3 = block(add2, 128, 0.125)
+    drop3 = block(add2, 128)
     add3 = MaxPooling2D(pool_size=(2, 2))(drop3)
-    drop4 = block(add3, 256, 0.125)
+    drop4 = block(add3, 256)
     add4 = MaxPooling2D(pool_size=(2, 2))(drop4)
-    drop5 = block(add4, 512, 0.125)
+    drop5 = block(add4, 512)
     add5 = MaxPooling2D(pool_size=(2, 2))(drop5)
 
-    drop6 = block(add5, 1024, 0.125)
+    drop6 = block(add5, 1024)
 
     up7 = concatenate([UpSampling2D(size=(2, 2))(drop6), drop5], axis=3)
-    drop7 = block(up7, 512, 0.125)
+    drop7 = block(up7, 512)
     up8 = concatenate([UpSampling2D(size=(2, 2))(drop7), drop4], axis=3)
-    drop8 = block(up8, 256, 0.125)
+    drop8 = block(up8, 256)
     up9 = concatenate([UpSampling2D(size=(2, 2))(drop8), drop3], axis=3)
-    drop9 = block(up9, 128, 0.125)
+    drop9 = block(up9, 128)
     up10 = concatenate([UpSampling2D(size=(2, 2))(drop9), drop2], axis=3)
-    drop10 = block(up10, 64, 0.125)
+    drop10 = block(up10, 64)
     up11 = concatenate([UpSampling2D(size=(2, 2))(drop10), drop1], axis=3)
-    drop11 = block(up11, 32, 0)
+    drop11 = block(up11, 32)
 
     conv12 = Conv2D(classes, (1, 1), activation='sigmoid')(drop11)
 
