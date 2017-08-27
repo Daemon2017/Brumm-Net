@@ -41,7 +41,11 @@ def block(input, size):
     conv3 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv1)
     conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
 
-    conv = concatenate([conv1, conv2, conv3], axis=3)
+    conv4 = Conv2D(size / 2 / 2, (3, 3), activation='elu', padding='same')(conv1)
+    conv4 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv4)
+    conv4 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv4)
+
+    conv = concatenate([conv1, conv2, conv3, conv4], axis=3)
     conv = Conv2D(size, (1, 1), activation='elu', padding='same')(conv)
     return conv
 
