@@ -38,14 +38,26 @@ def block(input, size):
 
     conv2 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv1)
 
-    conv3 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv1)
+    conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv1)
     conv3 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv3)
 
-    conv4 = Conv2D(size / 2 / 2, (3, 3), activation='elu', padding='same')(conv1)
-    conv4 = Conv2D(size / 2, (3, 3), activation='elu', padding='same')(conv4)
-    conv4 = Conv2D(size, (3, 3), activation='elu', padding='same')(conv4)
+    conv4 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv1)
+    conv4 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv4)
 
-    conv = concatenate([conv1, conv2, conv3, conv4], axis=3)
+    conv5 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv1)
+    conv5 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv5)
+    conv5 = Conv2D(size, (1, 7), activation='elu', padding='same')(conv5)
+    conv5 = Conv2D(size, (7, 1), activation='elu', padding='same')(conv5)
+
+    conv6_1 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
+    conv6_2 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv1)
+
+    conv7= Conv2D(size, (1, 3), activation='elu', padding='same')(conv1)
+    conv7= Conv2D(size, (3, 1), activation='elu', padding='same')(conv7)
+    conv7_1 = Conv2D(size, (3, 1), activation='elu', padding='same')(conv7)
+    conv7_2 = Conv2D(size, (1, 3), activation='elu', padding='same')(conv7)
+
+    conv = concatenate([conv1, conv2, conv3, conv4, conv5, conv6_1, conv6_2, conv7_1, conv7_2], axis=3)
     conv = Conv2D(size, (1, 1), activation='elu', padding='same')(conv)
     return conv
 
