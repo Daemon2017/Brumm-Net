@@ -161,16 +161,6 @@ x_files_names.sort()
 y_files_names.sort()
 x_total = len(x_files_names)
 y_total = len(y_files_names)
-print('------------------------------')
-print('Raw train files:')
-for file in x_files_names:
-    print(str(file))
-print('------------------------------')
-print('------------------------------')
-print('Mask train files:')
-for file in y_files_names:
-    print(str(file))
-print('------------------------------')
 total = 0
 if x_total != y_total:
     exit()
@@ -190,16 +180,6 @@ x_test_files_names.sort()
 y_test_files_names.sort()
 x_test_total = len(x_test_files_names)
 y_test_total = len(y_test_files_names)
-print('------------------------------')
-print('Raw test files:')
-for file in x_test_files_names:
-    print(str(file))
-print('------------------------------')
-print('------------------------------')
-print('Mask test files:')
-for file in y_test_files_names:
-    print(str(file))
-print('------------------------------')
 total_test = 0
 if x_test_total != y_test_total:
     exit()
