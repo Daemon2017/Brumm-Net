@@ -78,6 +78,6 @@ def build():
 
     model = Model(inputs=[inputs], outputs=[conv12])
 
-    model.compile(optimizer=Adam(lr=L_0, decay=0.0001 / epochs_num), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=L_0), loss=dice_coef_loss, metrics=[dice_coef])
     print('Model ready!')
     return model
