@@ -8,6 +8,7 @@ from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate, Conv2DTranspose, Dropout, BatchNormalization, add, \
     AveragePooling2D, UpSampling2D
 from keras.optimizers import Adam
+from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback, LearningRateScheduler
 from keras import backend as K
 
