@@ -119,7 +119,7 @@ def batch_generator():
             batch_num = 0
         print('------------------------------')
 
-        return train_generator
+        yield train_generator
 
 
 def batch_test_generator():
