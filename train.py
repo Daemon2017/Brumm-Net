@@ -14,7 +14,7 @@ from keras import backend as K
 
 from mymodel import dice_coef, dice_coef_loss, build, img_width, img_height, classes, L_0, epochs_num
 
-size_of_batch = 5
+size_of_batch = 1
 
 start = 0
 end = size_of_batch
@@ -50,6 +50,28 @@ def batch_generator():
     while True:
         print('------------------------------')
         print('Generating training batch ' + str(batch_num))
+        data_gen_args_train = dict(featurewise_center=False,
+                                   samplewise_center=False,
+                                   featurewise_std_normalization=False,
+                                   samplewise_std_normalization=False,
+                                   zca_whitening=False,
+                                   zca_epsilon=1e-6,
+                                   rotation_range=90.,
+                                   width_shift_range=0.2,
+                                   height_shift_range=0.2,
+                                   shear_range=0.,
+                                   zoom_range=0.2,
+                                   channel_shift_range=0.,
+                                   fill_mode='constant',
+                                   cval=0.,
+                                   horizontal_flip=True,
+                                   vertical_flip=False,
+                                   # rescale=1. / 255.,
+                                   preprocessing_function=None,
+                                   data_format=K.image_data_format())
+        train_image_datagen = ImageDataGenerator(**data_gen_args_train)
+        train_mask_datagen = ImageDataGenerator(**data_gen_args_train)
+
         x_train = np.ndarray((size_of_batch, img_height, img_width, 3), dtype=np.uint8)
         y_train = np.ndarray((size_of_batch, img_height, img_width, 1), dtype=np.uint8)
 
@@ -73,6 +95,17 @@ def batch_generator():
         x_train /= x_std
         y_train /= 255.0
 
+        seed = 1
+        x_train = train_image_datagen.flow(x=x_train,
+                                           batch_size=size_of_batch,
+                                           shuffle=False,
+                                           seed=seed)
+        y_train = train_mask_datagen.flow(x=y_train,
+                                          batch_size=size_of_batch,
+                                          shuffle=False,
+                                          seed=seed)
+        train_generator = zip(x_train, y_train)
+
         print('Start is ' + str(start) + ', end is ' + str(end))
         start += size_of_batch
         end += size_of_batch
@@ -86,7 +119,7 @@ def batch_generator():
             batch_num = 0
         print('------------------------------')
 
-        yield x_train, y_train
+        return train_generator
 
 
 def batch_test_generator():
