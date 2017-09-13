@@ -59,8 +59,8 @@ def batch_generator():
                 'Preparing training file: #' + str(sample) + ', raw name: ' + str(
                     x_files_names[j]) + ', mask name: ' + str(
                     y_files_names[j]))
-            x_img = imread(os.path.join('./raws/' + x_files_names[j]))
-            y_img = scipy.ndimage.imread(os.path.join('./masks/' + y_files_names[j]), mode='L')
+            x_img = imread(os.path.join('./raws/0/' + x_files_names[j]))
+            y_img = scipy.ndimage.imread(os.path.join('./masks/0/' + y_files_names[j]), mode='L')
             x_train[sample] = np.array([x_img])
             y_train[sample] = np.array([y_img]).reshape(img_height, img_width, 1)
             sample += 1
@@ -154,8 +154,8 @@ if not os.path.exists('raws'):
     os.makedirs('raws')
 if not os.path.exists('masks'):
     os.makedirs('masks')
-x_files = os.listdir('./raws/')
-y_files = os.listdir('./masks/')
+x_files = os.listdir('./raws/0/')
+y_files = os.listdir('./masks/0/')
 x_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_files)
 y_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_files)
 x_files_names.sort()
