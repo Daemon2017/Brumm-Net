@@ -104,8 +104,8 @@ def batch_test_generator():
             print('Preparing test file: #' + str(sample) + ', raw name: ' + str(
                 x_test_files_names[j]) + ', mask name: ' + str(
                 y_test_files_names[j]))
-            x_img = imread(os.path.join('./test_raws/' + x_test_files_names[j]))
-            y_img = scipy.ndimage.imread(os.path.join('./test_masks/' + y_test_files_names[j]), mode='L')
+            x_img = imread(os.path.join('./test_raws/0/' + x_test_files_names[j]))
+            y_img = scipy.ndimage.imread(os.path.join('./test_masks/0/' + y_test_files_names[j]), mode='L')
             x_test[sample] = np.array([x_img])
             y_test[sample] = np.array([y_img]).reshape(img_height, img_width, 1)
             sample += 1
@@ -173,8 +173,8 @@ if not os.path.exists('test_raws'):
     os.makedirs('test_raws')
 if not os.path.exists('test_masks'):
     os.makedirs('test_masks')
-x_test_files = os.listdir('./test_raws/')
-y_test_files = os.listdir('./test_masks/')
+x_test_files = os.listdir('./test_raws/0/')
+y_test_files = os.listdir('./test_masks/0/')
 x_test_files_names = filter(lambda x: x.endswith('_raw.jpg'), x_test_files)
 y_test_files_names = filter(lambda x: x.endswith('_mask.jpg'), y_test_files)
 x_test_files_names.sort()
