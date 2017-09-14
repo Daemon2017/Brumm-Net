@@ -119,7 +119,7 @@ def train():
                                                                 batch_size=size_of_batch,
                                                                 shuffle=False,
                                                                 seed=seed)
-    test_generator = zip(test_image_generator, test_mask_generator)
+    test_generator = izip(test_image_generator, test_mask_generator)
 
     model.fit_generator(generator=train_generator,
                         validation_data=test_generator,
