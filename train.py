@@ -2,6 +2,8 @@ import numpy as np
 import os
 import scipy.misc
 
+from itertools import izip
+
 from skimage.io import imread
 
 from keras.models import Model
@@ -77,7 +79,7 @@ def train():
                                                                   batch_size=size_of_batch,
                                                                   shuffle=False,
                                                                   seed=seed)
-    train_generator = zip(train_image_generator, train_mask_generator)
+    train_generator = izip(train_image_generator, train_mask_generator)
 
     data_gen_args_test = dict(featurewise_center=False,
                               samplewise_center=False,
