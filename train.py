@@ -2,6 +2,8 @@ import numpy as np
 import os
 import scipy.misc
 
+from itertools import izip
+
 from skimage.io import imread
 
 from keras.models import Model
@@ -104,7 +106,7 @@ def batch_generator():
                                           batch_size=size_of_batch,
                                           shuffle=False,
                                           seed=seed)
-        train_generator = zip(x_train, y_train)
+        train_generator = izip(x_train, y_train)
 
         print('Start is ' + str(start) + ', end is ' + str(end))
         start += size_of_batch
