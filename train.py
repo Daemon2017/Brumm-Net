@@ -16,7 +16,7 @@ from keras import backend as K
 
 from mymodel import dice_coef, dice_coef_loss, build, img_width, img_height, classes, L_0, epochs_num
 
-size_of_batch = 1
+size_of_batch = 5
 
 K.set_image_dim_ordering('tf')
 
